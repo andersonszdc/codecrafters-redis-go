@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"io"
+
 	// Uncomment this block to pass the first stage
 	"net"
 	"os"
@@ -23,11 +25,18 @@ func main() {
 
 	defer conn.Close()
 
-	buf := make([]byte, 1024)
+	for {
+		buf := make([]byte, 1024)
 
-	if _, err := conn.Read(buf); err != nil {
-		fmt.Println("error reading from client: ", err.Error())
+		if _, err := conn.Read(buf); err != nil {
+			if err == io.EOF {
+				break
+			} else {
+				fmt.Println("error reading from client: ", err.Error())
+				os.Exit(1)
+			}
+		}
+
+		conn.Write([]byte("+PONG\r\n"))
 	}
-
-	conn.Write([]byte("+PONG\r\n"))
 }
