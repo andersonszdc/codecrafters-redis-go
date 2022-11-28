@@ -1,8 +1,8 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
-	"io"
 
 	// Uncomment this block to pass the first stage
 	"net"
@@ -32,17 +32,21 @@ func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
 	for {
-		buf := make([]byte, 1024)
-
-		if _, err := conn.Read(buf); err != nil {
-			if err == io.EOF {
-				break
-			} else {
-				fmt.Println("error reading from client: ", err.Error())
-				os.Exit(1)
-			}
+		value, err := DecodeRESP(bufio.NewReader(conn))
+		if err != nil {
+			fmt.Println("Error decoding RESP: ", err.Error())
 		}
 
-		conn.Write([]byte("+PONG\r\n"))
+		command := value.Array()[0].String()
+		args := value.Array()[1:]
+
+		switch command {
+		case "ping":
+			conn.Write([]byte("+PONG\r\n"))
+		case "echo":
+			conn.Write([]byte(fmt.Sprintf("$%d\r\n%s\r\n", len(args[0].String()), args[0].String())))
+		default:
+			conn.Write([]byte("-ERR unknown command '" + command + "'\r\n"))
+		}
 	}
 }
