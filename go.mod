@@ -1,3 +1,3 @@
-module andersonszdc.com/codecrafters-redis-go
+module andersonszdc.com/redis-go
 
 go 1.19
